@@ -191,7 +191,7 @@
         <div class="prop-row">
             <span class="prop-label">字色</span>
             <input type="color" id="fillColor" onchange="updateStyle('fill', this.value)">
-            <span style="font-size:12px; color:#999;">点击方框选择颜色</span>
+            <span style="font-size:12px; color:#999;">点击圆圈选择颜色</span>
         </div>
         <div class="prop-row">
             <span class="prop-label">描边</span>
@@ -264,7 +264,7 @@
         function addText() {
             const text = new fabric.IText('双击编辑', {
                 left: canvas.width / 2, top: canvas.height / 2, originX: 'center', originY: 'center',
-                fontFamily: 'Poppins, sans-serif', fill: '#ffffff', fontSize: 40, fontWeight: 'bold',
+                fontFamily: 'Poppins, sans-serif', fill: '#000000', fontSize: 40, fontWeight: 'bold',
                 stroke: '#000000', strokeWidth: 1.5, paintFirst: 'stroke',
                 shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.5)', blur: 10, offsetX: 2, offsetY: 2 }),
                 editable: true 
