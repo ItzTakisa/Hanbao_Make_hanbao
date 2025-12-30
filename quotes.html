@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>汉堡语录生成器</title>
+    <link rel="icon" href="images/icon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --bg-color: #f5f5f7;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .nav-bar {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+        .logo-img { width: 28px; height: 28px; object-fit: contain; }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--primary-color);
+            font-size: 14px;
+            background: rgba(0,122,255,0.1);
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+        }
+
+        .quote-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            padding: 40px 30px;
+            text-align: center;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .quote-icon {
+            font-size: 40px;
+            color: #ddd;
+            margin-bottom: 20px;
+            line-height: 1;
+        }
+
+    
+        #quoteDisplay {
+            width: 100%;
+            border: none;
+            resize: none;
+            font-size: 20px;
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+            text-align: center;
+            outline: none;
+            background: transparent;
+            line-height: 1.6;
+            min-height: 120px; 
+            font-weight: 500;
+        }
+
+        .author-input {
+            margin-top: 15px;
+            border: none;
+            text-align: right;
+            width: 100%;
+            color: #888;
+            font-style: italic;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .action-area {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .btn:active { transform: scale(0.95); }
+
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-secondary { background: white; color: #333; }
+        .btn-copy { background: #34c759; color: white; }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; }
+
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <div class="logo-area">
+            <img src="images/icon.png" class="logo-img" alt="Logo" onerror="this.style.display='none'">
+            <span>语录生成器</span>
+        </div>
+        <a href="index.html" class="nav-link">去制图</a>
+    </div>
+
+    <div class="quote-card">
+        <div class="quote-icon">“</div>
+        <textarea id="quoteDisplay" oninput="autoResize(this)"></textarea>
+        <input type="text" id="quoteAuthor" class="author-input" value="—— 汉堡">
+    </div>
+
+    <div class="action-area">
+        <button class="btn btn-secondary" onclick="generateQuote()">🎲换一句</button>
+        <button class="btn btn-copy" onclick="copyText()">复制</button>
+        <button class="btn btn-primary" onclick="goToEditor()">用此文制图</button>
+    </div>
+
+    <div id="toast" class="toast">已复制到剪贴板</div>
+
+    <script>
+        const quotesDB = [
+            "不难但是手感有点吃屎",
+            "不擅长的跳拍，其实不应该刷这么久的，但是歌挺好听",
+            "不擅长估计抓不上五星就先不打了",
+            "这把绝赞垃圾了",
+            "打完开头以为绝对不能五星了，结果中间打的有点准",
+            "结尾在打你妈，差点玩没了",
+            "好难抓，现在的水平还五不了",
+            "后面剩太多了盯着中间分心了结果差点坠机 总体比想象中简单",
+            "中间休息段打的太搞笑就当看乐子了",
+            "刷视频感觉音游圈没营养的弱智标题和尴尬的视频内容太多了，尤其舞萌 关键是还有那么多人喜欢吃",
+            "上手第一把四星都没有以为打不掉了，但是其实连着刷熟悉了之后没那么难",
+            "没打好的地方挺多的还五星了，理论值有点意外",
+            "bpm180的你再强大也是假的",
+            "这个真他妈粪谱我操",
+            "打的不是很好，肉眼可见还有很多地方节奏打的不到位"
+        ];
+
+        const authorsDB = [
+
+        ];
+
+ 
+        function generateQuote() {
+            const display = document.getElementById('quoteDisplay');
+            const author = document.getElementById('quoteAuthor');
+            
+            const randomIndex = Math.floor(Math.random() * quotesDB.length);
+            const randomAuthorIndex = Math.floor(Math.random() * authorsDB.length);
+            display.style.opacity = 0;
+            
+            setTimeout(() => {
+                display.value = quotesDB[randomIndex];
+                autoResize(display); 
+                display.style.opacity = 1;
+            }, 200);
+        }
+
+        function copyText() {
+            const text = document.getElementById('quoteDisplay').value;
+            const author = document.getElementById('quoteAuthor').value;
+            const fullText = text + '\n' + author;
+
+            navigator.clipboard.writeText(fullText).then(() => {
+                showToast();
+            });
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        function goToEditor() {
+            const text = document.getElementById('quoteDisplay').value;
+
+            window.location.href = 'index.html?text=' + encodeURIComponent(text);
+        }
+
+        window.onload = function() {
+            generateQuote();
+        }
+    </script>
+</body>
+</html>
