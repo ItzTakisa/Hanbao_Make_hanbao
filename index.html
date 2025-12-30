@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>汉堡语录生成器</title>
-    <link rel="icon" href="icon.png" type="image/png">
+    <link rel="icon" href="images/icon.png" type="image/png">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
@@ -223,7 +223,7 @@
         © 2025 Zhoushudechang Team | <a href="https://space.bilibili.com/382046701">寻找汉堡</a> | <a href="https://www.bilibili.com/video/BV1GJ411x7h7">你猜猜这个是什么</a>
     </footer>
 
-    <script>
+<script>
         const initWidth = Math.min(window.innerWidth - 40, 500);
         const EMOJI_FONT_STACK = "'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', 'EmojiSymbols', sans-serif";
 
@@ -233,13 +233,63 @@
             backgroundColor: 'transparent',
             preserveObjectStacking: true,
             selectionColor: 'rgba(0,122,255,0.1)',
-            selectionBorderColor: '#007AFF'
+            selectionBorderColor: '#007AFF',
+            allowTouchScrolling: false, 
+            fireRightClick: true,  
+            stopContextMenu: true,
         });
 
         let currentBgImage = null;
         let history = [];
         let historyIndex = -1;
         let historyProcessing = false;
+
+        canvas.on('touch:gesture', function(e) {
+            const activeObj = canvas.getActiveObject();
+            if (!activeObj) return;
+            if (activeObj.name === 'bgImage' && activeObj.lockRotation) return;
+
+            if (e.self.state === "start") {
+                activeObj._startScale = activeObj.scaleX; 
+                activeObj._startAngle = activeObj.angle;
+            } 
+            else if (e.self.state === "change") {
+            
+                const newScale = activeObj._startScale * e.self.scale;
+                const newAngle = activeObj._startAngle + e.self.rotation;
+                
+
+                activeObj.set({
+                    scaleX: newScale,
+                    scaleY: newScale,
+                    angle: newAngle
+                });
+                
+
+                canvas.requestRenderAll();
+            }
+            else if (e.self.state === "end") {
+
+                activeObj.setCoords();
+                saveHistory();
+            }
+        });
+
+
+        function addText() {
+            const text = new fabric.IText('双击编辑', {
+                left: canvas.width / 2, top: canvas.height / 2, originX: 'center', originY: 'center',
+                fontFamily: 'Poppins, sans-serif', fill: '#ffffff', fontSize: 40, fontWeight: 'bold',
+                stroke: '#000000', strokeWidth: 1.5, paintFirst: 'stroke',
+                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.5)', blur: 10, offsetX: 2, offsetY: 2 }),
+
+                editable: true 
+            });
+            canvas.add(text);
+            canvas.setActiveObject(text);
+        }
+
+
 
         function finishEditing() {
             if (canvas.getActiveObject() && canvas.getActiveObject().isEditing) {
@@ -307,9 +357,10 @@
         canvas.on('object:removed', () => !historyProcessing && saveHistory());
         saveHistory();
 
+
         fabric.Object.prototype.set({
             transparentCorners: false, cornerColor: '#ffffff', cornerStrokeColor: '#007AFF',
-            borderColor: '#007AFF', cornerSize: 16, padding: 8, borderScaleFactor: 2, rotatingPointOffset: 20
+            borderColor: '#007AFF', cornerSize: 20, padding: 10, borderScaleFactor: 2, rotatingPointOffset: 20
         });
 
         document.getElementById('imgLoader').addEventListener('change', function(e) {
@@ -341,17 +392,6 @@
         function keepBgAtBottom() { if (currentBgImage) canvas.sendToBack(currentBgImage); }
         canvas.on('object:modified', keepBgAtBottom);
         canvas.on('selection:created', keepBgAtBottom);
-
-        function addText() {
-            const text = new fabric.IText('点击编辑', {
-                left: canvas.width / 2, top: canvas.height / 2, originX: 'center', originY: 'center',
-                fontFamily: 'Poppins, sans-serif', fill: '#ffffff', fontSize: 40, fontWeight: 'bold',
-                stroke: '#000000', strokeWidth: 1.5, paintFirst: 'stroke',
-                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.5)', blur: 10, offsetX: 2, offsetY: 2 })
-            });
-            canvas.add(text);
-            canvas.setActiveObject(text);
-        }
 
         function addEmoji(emoji) {
             const text = new fabric.IText(emoji, {
@@ -425,7 +465,6 @@
             document.body.removeChild(link);
         }
 
-
         window.addEventListener('load', function() {
             const urlParams = new URLSearchParams(window.location.search);
             const passedText = urlParams.get('text');
@@ -443,7 +482,6 @@
             }
         });
 
-
         const propPanel = document.getElementById('propPanel');
         canvas.on('selection:created', (e) => handleSelection(e.selected[0]));
         canvas.on('selection:updated', (e) => handleSelection(e.selected[0]));
@@ -455,10 +493,7 @@
                 document.getElementById('fillColor').value = obj.fill || '#000000';
                 document.getElementById('strokeColor').value = obj.stroke || '#ffffff';
                 document.getElementById('strokeWidth').value = obj.strokeWidth || 0;
-                
-
                 document.getElementById('fontFamily').value = obj.fontFamily || 'Poppins, sans-serif';
-
                 if (obj.shadow) {
                      document.getElementById('shadowColor').value = typeof obj.shadow.color === 'string' ? obj.shadow.color.substring(0,7) : '#000000';
                     document.getElementById('shadowBlur').value = obj.shadow.blur || 0;
